@@ -1,156 +1,87 @@
 <!DOCTYPE html>
 <html>
-
 <head>
-
 <title>Pokémon Cards</title>
-
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-
 <style>
-
-body{
-    margin:0;
-    padding:25px;
-    background:#7a0015;
-    font-family:Arial,sans-serif;
-}
-
-.pokedex{
-    max-width:1600px;
-    margin:auto;
-    background:#d60028;
-    border:10px solid #7a0015;
-    border-radius:30px;
-    padding:25px;
-}
-
-h1{
-    text-align:center;
-    color:white;
-    font-family:'Press Start 2P';
-    margin-bottom:30px;
-}
-
-.back{
-    display:inline-block;
-    padding:12px 20px;
-    background:#222;
-    color:white;
-    text-decoration:none;
-    border-radius:10px;
-    margin-bottom:20px;
-}
-
-#cards{
-    display:grid;
-    grid-template-columns:repeat(auto-fill,minmax(250px,1fr));
-    gap:15px;
-}
-
-.card{
-    background:white;
-    border-radius:12px;
-    padding:15px;
-    text-align:center;
-}
-
-.card img{
-    width:100%;
-    max-width:220px;
-}
-
-.set{
-    color:#666;
-    margin-top:8px;
-}
-
+body{margin:0;padding:25px;background:#7a0015;font-family:Arial,sans-serif;}
+.pokedex{max-width:1600px;margin:auto;background:#d60028;border:10px solid #7a0015;border-radius:30px;padding:25px;}
+h1{text-align:center;color:white;font-family:'Press Start 2P';margin-bottom:30px;}
+.back{display:inline-block;padding:12px 20px;background:#222;color:white;text-decoration:none;border-radius:10px;margin-bottom:20px;}
+#cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:15px;}
+.card{background:white;border-radius:12px;padding:15px;text-align:center;cursor:pointer;}
+.card img{width:100%;max-width:220px;}
+.set{color:#666;margin-top:8px;}
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9999;justify-content:center;align-items:center;padding:20px;}
+.modal-content{background:white;max-width:500px;width:100%;border-radius:15px;padding:20px;text-align:center;}
+.modal-content img{width:100%;max-width:350px;}
+.close{float:right;font-size:30px;cursor:pointer;}
+.owned{background:#28a745;color:white;border:none;padding:12px 20px;border-radius:8px;margin-top:15px;font-size:16px;}
 </style>
-
 </head>
-
 <body>
 
 <div class="pokedex">
-
-<a href="index.html" class="back">
-← Back to Pokédex
-</a>
-
-<h1 id="title">
-Loading...
-</h1>
-
+<a href="index.html" class="back">← Back to Pokédex</a>
+<h1 id="title">Loading...</h1>
 <div id="cards"></div>
-
 </div>
 
-<script type="module">
+<div id="cardModal" class="modal">
+<div class="modal-content">
+<span class="close" onclick="closeModal()">&times;</span>
+<h2 id="modalName"></h2>
+<img id="modalImage">
+<p id="modalSet"></p>
+<p id="modalNumber"></p>
+<p id="modalRarity"></p>
+<button class="owned">✓ Owned</button>
+</div>
+</div>
 
-import { initializeApp }
-from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
+<script>
 
-import {
-    getFirestore,
-    collection,
-    getDocs
-}
-from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
-
-const firebaseConfig = {
-
-    apiKey: "AIzaSyA7BIoRS7elZZ3I87Cs5jDbk1lzoflObvs",
-
-    authDomain:
-    "pokedex-catch-them-all.firebaseapp.com",
-
-    projectId:
-    "pokedex-catch-them-all",
-
-    storageBucket:
-    "pokedex-catch-them-all.firebasestorage.app",
-
-    messagingSenderId:
-    "283452092695",
-
-    appId:
-    "1:283452092695:web:371215dadb6c9ede150752"
-
-};
-
-const app = initializeApp(firebaseConfig);
-
-const db = getFirestore(app);
-
-const params =
-    new URLSearchParams(window.location.search);
-
-const dexNumber =
-    parseInt(params.get("id"));
+const params = new URLSearchParams(window.location.search);
+const dexNumber = parseInt(params.get("id"));
 
 let pokemonName = "";
+let loadedCards = [];
+
+function showCardById(cardId){
+
+    const card = loadedCards.find(
+        c => c.cardId === cardId
+    );
+
+    if(!card) return;
+
+    showCard(card);
+}
 
 async function loadPage(){
 
-    const pokemonSnapshot =
-        await getDocs(
-            collection(db,"pokemon")
+    const pokemonResponse =
+        await fetch("pokemon.json");
+
+    const pokemon =
+        await pokemonResponse.json();
+
+    const currentPokemon =
+        pokemon.find(
+            p => p.dexNumber === dexNumber
         );
 
-    pokemonSnapshot.forEach(doc=>{
+    if(!currentPokemon){
 
-        const p = doc.data();
+        document.getElementById("title").innerText =
+            "Pokémon Not Found";
 
-        if(p.dexNumber === dexNumber){
+        return;
+    }
 
-            pokemonName = p.name;
+    pokemonName = currentPokemon.name;
 
-        }
-
-    });
-
-    document.getElementById("title")
-        .innerText =
+    document.getElementById("title").innerText =
         pokemonName;
 
     loadCards();
@@ -158,43 +89,88 @@ async function loadPage(){
 
 async function loadCards(){
 
-    const snapshot =
-        await getDocs(
-            collection(db,"cards")
-        );
+    const response =
+        await fetch("data/cards.json");
+
+    const allCards =
+        await response.json();
+
+    loadedCards = allCards;
 
     const cards =
         document.getElementById("cards");
 
-    snapshot.forEach(doc=>{
+    const matchingCards =
+        allCards.filter(card =>
 
-        const card = doc.data();
-
-        if(
             card.name &&
             card.name.toLowerCase() ===
             pokemonName.toLowerCase()
-        ){
 
-            cards.innerHTML += `
+        );
 
-                <div class="card">
+    matchingCards.forEach(card => {
 
-                    <img src="${card.image}">
+        cards.innerHTML += `
+        <div class="card">
 
-                    <h3>${card.name}</h3>
+            <img
+                src="${card.image}"
+                onclick="alert('clicked')"
+            >
 
-                    <div class="set">
-                        ${card.set}
-                    </div>
+            <h3>${card.name}</h3>
 
-                </div>
+            <div class="set">
+                ${card.set}
+            </div>
 
-            `;
-
-        }
+        </div>
+        `;
 
     });
+
+}
+
+function showCard(card){
+
+    alert(card.name);
+
+    document.getElementById("modalName").innerText =
+        card.name;
+
+    document.getElementById("modalImage").src =
+        card.largeImage || card.image;
+
+    document.getElementById("modalSet").innerText =
+        "Set: " + card.set;
+
+    document.getElementById("modalNumber").innerText =
+        "Number: " + card.number;
+
+    document.getElementById("modalRarity").innerText =
+        "Rarity: " + (card.rarity || "Unknown");
+
+    document.getElementById("cardModal").style.display =
+        "flex";
+}
+
+function closeModal(){
+
+    document.getElementById("cardModal").style.display =
+        "none";
+}
+
+window.onclick = function(event){
+
+    const modal =
+        document.getElementById("cardModal");
+
+    if(event.target === modal){
+
+        closeModal();
+
+    }
 
 }
 
@@ -203,5 +179,4 @@ loadPage();
 </script>
 
 </body>
-
 </html>
