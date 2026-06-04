@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>Pokémon Cards</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+
+<style>
+
+body{
+    margin:0;
+    padding:25px;
+    background:#7a0015;
+    font-family:Arial,sans-serif;
+}
+
+.pokedex{
+    max-width:1600px;
+    margin:auto;
+    background:#d60028;
+    border:10px solid #7a0015;
+    border-radius:30px;
+    padding:25px;
+}
+
+h1{
+    text-align:center;
+    color:white;
+    font-family:'Press Start 2P';
+    margin-bottom:30px;
+}
+
+.back{
+    display:inline-block;
+    padding:12px 20px;
+    background:#222;
+    color:white;
+    text-decoration:none;
+    border-radius:10px;
+    margin-bottom:20px;
+}
+
+#cards{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(250px,1fr));
+    gap:15px;
+}
+
+.card{
+    background:white;
+    border-radius:12px;
+    padding:15px;
+    text-align:center;
+}
+
+.card img{
+    width:100%;
+    max-width:220px;
+}
+
+.set{
+    color:#666;
+    margin-top:8px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="pokedex">
+
+<a href="index.html" class="back">
+← Back to Pokédex
+</a>
+
+<h1 id="title">
+Loading...
+</h1>
+
+<div id="cards"></div>
+
+</div>
+
+<script type="module">
+
+import { initializeApp }
+from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
+
+import {
+    getFirestore,
+    collection,
+    getDocs
+}
+from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
+
+const firebaseConfig = {
+
+    apiKey: "AIzaSyA7BIoRS7elZZ3I87Cs5jDbk1lzoflObvs",
+
+    authDomain:
+    "pokedex-catch-them-all.firebaseapp.com",
+
+    projectId:
+    "pokedex-catch-them-all",
+
+    storageBucket:
+    "pokedex-catch-them-all.firebasestorage.app",
+
+    messagingSenderId:
+    "283452092695",
+
+    appId:
+    "1:283452092695:web:371215dadb6c9ede150752"
+
+};
+
+const app = initializeApp(firebaseConfig);
+
+const db = getFirestore(app);
+
+const params =
+    new URLSearchParams(window.location.search);
+
+const dexNumber =
+    parseInt(params.get("id"));
+
+let pokemonName = "";
+
+async function loadPage(){
+
+    const pokemonSnapshot =
+        await getDocs(
+            collection(db,"pokemon")
+        );
+
+    pokemonSnapshot.forEach(doc=>{
+
+        const p = doc.data();
+
+        if(p.dexNumber === dexNumber){
+
+            pokemonName = p.name;
+
+        }
+
+    });
+
+    document.getElementById("title")
+        .innerText =
+        pokemonName;
+
+    loadCards();
+}
+
+async function loadCards(){
+
+    const snapshot =
+        await getDocs(
+            collection(db,"cards")
+        );
+
+    const cards =
+        document.getElementById("cards");
+
+    snapshot.forEach(doc=>{
+
+        const card = doc.data();
+
+        if(
+            card.name &&
+            card.name.toLowerCase() ===
+            pokemonName.toLowerCase()
+        ){
+
+            cards.innerHTML += `
+
+                <div class="card">
+
+                    <img src="${card.image}">
+
+                    <h3>${card.name}</h3>
+
+                    <div class="set">
+                        ${card.set}
+                    </div>
+
+                </div>
+
+            `;
+
+        }
+
+    });
+
+}
+
+loadPage();
+
+</script>
+
+</body>
+
+</html>

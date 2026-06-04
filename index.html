@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Pokédex</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+
+<style>
+*{box-sizing:border-box}
+
+body{
+    margin:0;
+    padding:25px;
+    background:#7a0015;
+    font-family:Arial,sans-serif;
+}
+
+.pokedex{
+    max-width:1600px;
+    margin:auto;
+    background:#d60028;
+    border:10px solid #7a0015;
+    border-radius:30px;
+    padding:25px;
+    box-shadow:inset 0 0 25px rgba(255,255,255,.2),0 0 30px rgba(0,0,0,.6);
+}
+
+.lights{
+    display:flex;
+    gap:10px;
+    margin-bottom:20px;
+}
+
+.blue-light{
+    width:40px;
+    height:40px;
+    border-radius:50%;
+    background:#4da6ff;
+    border:4px solid white;
+}
+
+.red-light,.yellow-light,.green-light{
+    width:18px;
+    height:18px;
+    border-radius:50%;
+    margin-top:10px;
+}
+
+.red-light{background:red}
+.yellow-light{background:yellow}
+.green-light{background:lime}
+
+h1{
+    text-align:center;
+    font-family:'Press Start 2P', cursive;
+    color:white;
+    margin-bottom:30px;
+    font-size:28px;
+}
+
+#search{
+    width:100%;
+    padding:15px;
+    border-radius:10px;
+    border:4px solid #222;
+    background:#cfe8cf;
+    font-size:18px;
+    margin-bottom:25px;
+}
+
+#cards{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
+    gap:15px;
+}
+
+.card{
+    background:#e5f0ff;
+    border:4px solid #1f3c88;
+    border-radius:12px;
+    text-align:center;
+    padding:15px;
+    transition:.2s;
+}
+
+.card:hover{
+    transform:scale(1.03);
+    cursor:pointer;
+}
+
+.card img{
+    width:120px;
+    height:120px;
+}
+
+.dex-number{
+    color:#555;
+    font-weight:bold;
+}
+
+.pokemon-name{
+    font-size:20px;
+    font-weight:bold;
+    margin:10px 0;
+    text-transform:capitalize;
+}
+
+.type{
+    display:inline-block;
+    background:#ddd;
+    padding:5px 10px;
+    border-radius:8px;
+    margin:2px;
+    font-size:12px;
+}
+
+#pagination{
+    margin-top:25px;
+    text-align:center;
+}
+
+button{
+    background:#222;
+    color:white;
+    border:none;
+    border-radius:8px;
+    padding:12px 20px;
+    margin:0 10px;
+    cursor:pointer;
+    font-size:16px;
+}
+
+button:hover{background:#000}
+
+#pageInfo{
+    color:white;
+    font-weight:bold;
+}
+</style>
+</head>
+
+<body>
+
+<div class="pokedex">
+
+    <div class="lights">
+        <div class="blue-light"></div>
+        <div class="red-light"></div>
+        <div class="yellow-light"></div>
+        <div class="green-light"></div>
+    </div>
+
+    <h1>POKÉDEX</h1>
+
+    <input type="text" id="search" placeholder="Search Pokémon...">
+
+    <div id="cards"></div>
+
+    <div id="pagination">
+        <button id="prevBtn">◀ Previous</button>
+        <span id="pageInfo"></span>
+        <button id="nextBtn">Next ▶</button>
+    </div>
+
+</div>
+
+<script type="module">
+
+import { initializeApp } 
+from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
+
+import {
+    getFirestore,
+    collection,
+    getDocs
+} from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
+
+const firebaseConfig = {
+    apiKey: "AIzaSyA7BIoRS7elZZ3I87Cs5jDbk1lzoflObvs",
+    authDomain: "pokedex-catch-them-all.firebaseapp.com",
+    projectId: "pokedex-catch-them-all",
+    storageBucket: "pokedex-catch-them-all.firebasestorage.app",
+    messagingSenderId: "283452092695",
+    appId: "1:283452092695:web:371215dadb6c9ede150752"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+let allPokemon = [];
+let filteredPokemon = [];
+let currentPage = 1;
+const pageSize = 50;
+
+async function loadPokemon(){
+
+    const snapshot = await getDocs(collection(db,"pokemon"));
+
+    snapshot.forEach(doc => {
+        allPokemon.push(doc.data());
+    });
+
+    allPokemon.sort((a,b) => a.dexNumber - b.dexNumber);
+
+    filteredPokemon = [...allPokemon];
+
+    renderPokemon();
+}
+
+function renderPokemon(){
+
+    const cards = document.getElementById("cards");
+    cards.innerHTML = "";
+
+    const start = (currentPage - 1) * pageSize;
+    const end = start + pageSize;
+
+    const pokemonPage = filteredPokemon.slice(start,end);
+
+    pokemonPage.forEach(p => {
+
+        let typesHtml = "";
+
+        if(p.types){
+            p.types.forEach(type => {
+                typesHtml += `<span class="type">${type}</span>`;
+            });
+        }
+
+        cards.innerHTML += `
+            <div class="card" onclick="location.href='pokemon.html?id=${p.dexNumber}'">
+
+                <img src="${p.image}" alt="${p.name}">
+
+                <div class="dex-number">
+                    #${p.dexNumber}
+                </div>
+
+                <div class="pokemon-name">
+                    ${p.name}
+                </div>
+
+                <div>
+                    ${typesHtml}
+                </div>
+
+            </div>
+        `;
+    });
+
+    const totalPages = Math.ceil(filteredPokemon.length / pageSize);
+
+    document.getElementById("pageInfo").innerText =
+        `Page ${currentPage} of ${totalPages}`;
+}
+
+document.getElementById("search").addEventListener("input",(e)=>{
+
+    const search = e.target.value.toLowerCase().trim();
+
+    if(search === ""){
+
+        filteredPokemon = [...allPokemon];
+        currentPage = 1;
+
+        document.getElementById("pagination").style.display = "block";
+
+        renderPokemon();
+
+        return;
+    }
+
+    filteredPokemon = allPokemon.filter(p => {
+        return (
+            p.name.toLowerCase().includes(search) ||
+            String(p.dexNumber).includes(search)
+        );
+    });
+
+    currentPage = 1;
+
+    document.getElementById("pagination").style.display = "none";
+
+    renderPokemon();
+});
+
+document.getElementById("nextBtn").addEventListener("click",()=>{
+
+    const totalPages = Math.ceil(filteredPokemon.length / pageSize);
+
+    if(currentPage < totalPages){
+        currentPage++;
+        renderPokemon();
+    }
+});
+
+document.getElementById("prevBtn").addEventListener("click",()=>{
+
+    if(currentPage > 1){
+        currentPage--;
+        renderPokemon();
+    }
+});
+
+loadPokemon();
+
+</script>
+
+</body>
+</html>
