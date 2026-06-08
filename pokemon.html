@@ -3,6 +3,7 @@
 <head>
 <title>Pokémon Cards</title>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="gbc.css">
 <style>
 body{margin:0;padding:25px;background:#7a0015;font-family:Arial,sans-serif;}
 .pokedex{max-width:1600px;margin:auto;background:#d60028;border:10px solid #7a0015;border-radius:30px;padding:25px;}
@@ -21,10 +22,31 @@ h1{text-align:center;color:white;font-family:'Press Start 2P';margin-bottom:30px
 </head>
 <body>
 
-<div class="pokedex">
+<div class="pokedex gbc-screen">
 <a href="index.html" class="back">← Back to Pokédex</a>
 <h1 id="title">Loading...</h1>
 <div id="cards"></div>
+
+<div class="premium-locked">
+
+    <h3>PREMIUM FEATURES</h3>
+
+    <div class="lock-line"></div>
+
+    <p>🔒 COLLECTION VALUE</p>
+
+    <div class="lock-line"></div>
+
+    <p>🔒 OWNED CARDS</p>
+
+    <div class="lock-line"></div>
+
+    <p>🔒 WISHLIST</p>
+
+    <button class="unlock-btn">
+        UNLOCK PREMIUM
+    </button>
+
 </div>
 
 <div id="cardModal" class="modal">
