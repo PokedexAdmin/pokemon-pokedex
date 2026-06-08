@@ -79,6 +79,7 @@ function showCardById(cardId){
 
     showCard(card);
 }
+window.showCardById = showCardById;
 
 async function loadPage(){
 
@@ -138,7 +139,7 @@ async function loadCards(){
 
             <img
                 src="${card.image}"
-                onclick="alert('clicked')"
+                onclick="showCardById('${card.cardId}')"
             >
 
             <h3>${card.name}</h3>
